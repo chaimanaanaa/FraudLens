@@ -1,0 +1,170 @@
+{
+  "name": "FraudLens Pipeline",
+  "nodes": [
+    {
+      "id": "node-webhook",
+      "name": "FraudLens Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "webhookId": "5f1c2a3e-8d4b-4c7a-9e6f-2b7d4c1a9e50",
+      "position": [240, 300],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "fraudlens",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-extract",
+      "name": "Vision Agent — Extract Text",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:8000/extract",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"image_base64\": ($json.body ?? $json).image_base64, \"filename\": ($json.body ?? $json).filename } }}",
+        "options": {
+          "timeout": 180000
+        }
+      }
+    },
+    {
+      "id": "node-check-extract",
+      "name": "Check Extraction",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [720, 300],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.extracted_text }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-no-text",
+      "name": "Respond — No Text Found",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [960, 480],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"verdict\": \"LEGITIMATE\", \"confidence_score\": 0.5, \"reasons\": [\"Aucun texte détecté dans l'image\"], \"recommended_actions\": [\"Vérifiez que l'image contient bien du texte lisible\"], \"cited_sources\": [], \"validation_issues\": [], \"regenerated\": false, \"extracted_text\": \"\", \"passages\": [] } }}"
+      }
+    },
+    {
+      "id": "node-retrieve",
+      "name": "RAG Agent — Retrieve Patterns",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [960, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:8000/retrieve",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"extracted_text\": $json.extracted_text, \"image_base64\": $json.image_base64, \"filename\": $json.filename, \"top_k\": 5 } }}",
+        "options": {
+          "timeout": 60000
+        }
+      }
+    },
+    {
+      "id": "node-analyze",
+      "name": "Analysis Agent — Classify",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:8000/analyze",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"extracted_text\": $json.extracted_text, \"passages\": $json.passages, \"image_base64\": $json.image_base64, \"filename\": $json.filename, \"is_retry\": false } }}",
+        "options": {
+          "timeout": 180000
+        }
+      }
+    },
+    {
+      "id": "node-validate",
+      "name": "Validator Agent — Guardrails + Retry",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1440, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:8000/validate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"extracted_text\": $json.extracted_text, \"passages\": $json.passages, \"image_base64\": $json.image_base64, \"filename\": $json.filename, \"verdict\": $json.verdict, \"confidence_score\": $json.confidence_score, \"fraud_type\": $json.fraud_type, \"reasons\": $json.reasons, \"recommended_actions\": $json.recommended_actions, \"cited_sources\": $json.cited_sources, \"is_retry\": $json.is_retry } }}",
+        "options": {
+          "timeout": 300000
+        }
+      }
+    },
+    {
+      "id": "node-respond",
+      "name": "Respond to Streamlit",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1680, 300],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      }
+    }
+  ],
+  "connections": {
+    "FraudLens Webhook": {
+      "main": [
+        [{"node": "Vision Agent — Extract Text", "type": "main", "index": 0}]
+      ]
+    },
+    "Vision Agent — Extract Text": {
+      "main": [
+        [{"node": "Check Extraction", "type": "main", "index": 0}]
+      ]
+    },
+    "Check Extraction": {
+      "main": [
+        [{"node": "RAG Agent — Retrieve Patterns", "type": "main", "index": 0}],
+        [{"node": "Respond — No Text Found", "type": "main", "index": 0}]
+      ]
+    },
+    "RAG Agent — Retrieve Patterns": {
+      "main": [
+        [{"node": "Analysis Agent — Classify", "type": "main", "index": 0}]
+      ]
+    },
+    "Analysis Agent — Classify": {
+      "main": [
+        [{"node": "Validator Agent — Guardrails + Retry", "type": "main", "index": 0}]
+      ]
+    },
+    "Validator Agent — Guardrails + Retry": {
+      "main": [
+        [{"node": "Respond to Streamlit", "type": "main", "index": 0}]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromAList",
+    "errorWorkflow": ""
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "fraudlens-local"
+  }
+}

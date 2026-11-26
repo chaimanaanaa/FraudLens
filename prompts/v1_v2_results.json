@@ -1,0 +1,80 @@
+{
+  "runs": {
+    "extract/clear_sms/v1": {
+      "model": "gemini-3.5-flash-lite",
+      "metrics": {
+        "similarity_to_truth": 0.982,
+        "no_text_sentinel": false,
+        "uncertainty_marks": 0
+      },
+      "raw": "LA POSTE: Votre colis n'a pas pu etre livre. Des frais de 1,99 EUR sont a regler sous 24h sinon il sera retourne a l'expediteur : http://laposte-suivi-colis.info/pay"
+    },
+    "extract/clear_sms/v2": {
+      "model": "gemini-3.5-flash-lite",
+      "metrics": {
+        "similarity_to_truth": 1.0,
+        "no_text_sentinel": false,
+        "uncertainty_marks": 0
+      },
+      "raw": "LA POSTE: Votre colis n'a pas pu etre livre.\nDes frais de 1,99 EUR sont a regler sous 24h\nsinon il sera retourne a l'expediteur :\nhttp://laposte-suivi-colis.info/pay"
+    },
+    "extract/blurred_sms/v1": {
+      "model": "gemini-3.5-flash-lite",
+      "metrics": {
+        "similarity_to_truth": 0.982,
+        "no_text_sentinel": false,
+        "uncertainty_marks": 0
+      },
+      "raw": "LA POSTE: Votre colis n'a pas pu etre livre. Des frais de 1,99 EUR sont a regler sous 24h sinon il sera retourne a l'expediteur : http://laposte-suivi-colis.info/pay"
+    },
+    "extract/blurred_sms/v2": {
+      "model": "gemini-3.5-flash-lite",
+      "metrics": {
+        "similarity_to_truth": 1.0,
+        "no_text_sentinel": false,
+        "uncertainty_marks": 0
+      },
+      "raw": "LA POSTE: Votre colis n'a pas pu etre livre.\nDes frais de 1,99 EUR sont a regler sous 24h\nsinon il sera retourne a l'expediteur :\nhttp://laposte-suivi-colis.info/pay"
+    },
+    "extract/no_text/v1": {
+      "model": "gemini-3.5-flash-lite",
+      "metrics": {
+        "similarity_to_truth": null,
+        "no_text_sentinel": false,
+        "uncertainty_marks": 0
+      },
+      "raw": "There is no text in this image."
+    },
+    "extract/no_text/v2": {
+      "model": "gemini-3.5-flash-lite",
+      "metrics": {
+        "similarity_to_truth": null,
+        "no_text_sentinel": true,
+        "uncertainty_marks": 0
+      },
+      "raw": "NO_TEXT_FOUND"
+    },
+    "analyze/scam_parcel/v1": {
+      "model": "gemini-3.5-flash-lite",
+      "metrics": {
+        "parsed": false,
+        "markdown_fence": false
+      },
+      "raw": "**Verdict:** SCAM\n\n**Reasons:**\n1. **Phishing/Fake Domain:** The official website for La Poste (the French postal service) is `laposte.fr`. The link provided in the message (`laposte-suivi-colis.info`) is a fraudulent, look-alike domain designed to trick you into thinking it is official.\n2. **Unexpected Small Fees:** Postal services like La Poste do not typically send SMS notifications demanding an extra payment of €1.99 via a web link to redeliver a package. This is a classic \"smishing\" (SMS phishing) tactic used to steal credit card information.\n3. **Artificial Urgency:** The message uses pressure tactics (\"sous 24h sinon il sera retourne\" / within 24 hours otherwise it will be returned) to panic you into clicking the link without thinking.\n4. **Context Match:** Like the examples in the database (which highlight unsolicited offers, claims for bonuses, and payment demands via suspicious links), this message uses a common digital scam template to lure victims.\n\n**What to do:**\n* **Do NOT click the link.** Doing so could lead to a phishing site that steals your personal information or credit card details.\n* **Do NOT enter any personal or financial information.**\n* **Delete the messa"
+    },
+    "analyze/scam_parcel/v2": {
+      "model": "gemini-3.5-flash-lite",
+      "metrics": {
+        "parsed": true,
+        "markdown_fence": false,
+        "verdict": "SCAM",
+        "confidence": 0.92,
+        "reasons": 3,
+        "actions": 3,
+        "cited_sources": 1,
+        "refund_promise": false
+      },
+      "raw": "{\n  \"verdict\": \"SCAM\",\n  \"confidence_score\": 0.92,\n  \"fraud_type\": \"smishing\",\n  \"reasons\": [\n    \"Utilisation d'un faux domaine imitant La Poste (laposte-suivi-colis.info au lieu du domaine officiel laposte.fr)\",\n    \"Urgence artificielle imposée avec un délai de 24h pour forcer la décision\",\n    \"Demande de paiement de frais de port minimes (1,99 EUR) via un lien SMS, technique classique de phishing aux colis\"\n  ],\n  \"recommended_actions\": [\n    \"Ne pas cliquer sur le lien\",\n    \"Signaler le SMS au 33700\",\n    \"Supprimer le message\"\n  ],\n  \"cited_sources\": [\n    \"Dear Voucher Holder, To claim this weeks offer, at your PC please go to http://www.wtlp.co.uk/text. Ts&Cs apply.\"\n  ]\n}"
+    }
+  }
+}

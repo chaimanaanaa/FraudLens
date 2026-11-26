@@ -1,0 +1,9 @@
+Is this message a scam? Explain why.
+
+Message:
+{message}
+
+Context from database:
+{context}
+
+Answer with: verdict (SCAM/LEGITIMATE), reasons, and what to do.

@@ -1,0 +1,74 @@
+services:
+  # ── Qdrant — vector store
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: fraudlens-qdrant
+    volumes:
+      - qdrant_data:/qdrant/storage
+    ports:
+      - "${QDRANT_PORT:-6333}:6333"
+      - "${QDRANT_GRPC_PORT:-6334}:6334"
+    restart: unless-stopped
+
+  # ── FastAPI backend — 4 agents
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: fraudlens-backend
+    environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_VISION_MODEL: ${GEMINI_VISION_MODEL:-gemini-3.5-flash}
+      GEMINI_LLM_MODEL: ${GEMINI_LLM_MODEL:-gemini-3.5-flash}
+      GEMINI_EMBED_MODEL: ${GEMINI_EMBED_MODEL:-gemini-embedding-001}
+      QDRANT_HOST: qdrant
+      QDRANT_PORT: 6333
+      QDRANT_COLLECTION: ${QDRANT_COLLECTION:-fraudlens}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      - qdrant
+    restart: unless-stopped
+    volumes:
+      - ./config:/app/config:ro
+      - ./prompts:/app/prompts:ro
+
+  # ── n8n — orchestrator
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: fraudlens-n8n
+    environment:
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER:-admin}
+      N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD:-changeme}
+      N8N_HOST: localhost
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      WEBHOOK_URL: http://localhost:5678/
+      GENERIC_TIMEZONE: ${TIMEZONE:-Africa/Tunis}
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n:/home/node/.n8n/custom:ro
+    ports:
+      - "${N8N_PORT:-5678}:5678"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # ── Streamlit — frontend
+  streamlit:
+    build:
+      context: .
+      dockerfile: streamlit/Dockerfile
+    container_name: fraudlens-streamlit
+    environment:
+      N8N_WEBHOOK_URL: http://n8n:5678/webhook/fraudlens
+    ports:
+      - "${STREAMLIT_PORT:-8501}:8501"
+    depends_on:
+      - n8n
+    restart: unless-stopped
+
+volumes:
+  qdrant_data:
+  n8n_data:

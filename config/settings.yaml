@@ -1,0 +1,61 @@
+# FraudLens — configuration centrale
+# Toutes les valeurs ici sont des paramètres métier/RAG (pas de secrets).
+# La clé API Gemini est dans .env (GEMINI_API_KEY), jamais ici.
+
+gemini:
+  api_key: ""                               # override par GEMINI_API_KEY env var — ne pas committer
+  vision_model: "gemini-3.5-flash-lite"     # override par GEMINI_VISION_MODEL
+  llm_model: "gemini-3.5-flash-lite"       # override par GEMINI_LLM_MODEL
+  embed_model: "gemini-embedding-001"       # override par GEMINI_EMBED_MODEL
+  # Modèles essayés dans l'ordre si le modèle principal est saturé (503/429) ou retiré (404)
+  fallback_models: ["gemini-3.1-flash-lite"]
+  # Niveau de réflexion interne par agent (MINIMAL | LOW | MEDIUM | HIGH ; "" = défaut du modèle).
+  # L'OCR n'a pas besoin de raisonner : MINIMAL divise la latence d'extraction par ~2 à 6.
+  thinking_level:
+    extract: "MINIMAL"
+    analyze: ""
+    validate: "LOW"
+  timeout_seconds: 60
+  max_retries: 3
+
+qdrant:
+  host: "qdrant"                    # override par QDRANT_HOST
+  port: 6333
+  collection: "fraudlens"           # override par QDRANT_COLLECTION
+  vector_size: 3072                 # dimension gemini-embedding-001
+
+rag:
+  # Choisie d'après docs/retrieval_eval.md (fixed > recursive sur les 5 métriques)
+  active_chunking_strategy: "fixed"
+
+  fixed:
+    chunk_size: 512
+    chunk_overlap: 50
+
+  recursive:
+    chunk_size: 400
+    chunk_overlap: 80
+    separators: ["\n\n", "\n", ". ", " ", ""]
+
+  retrieval:
+    top_k: 5
+    score_threshold: 0.35
+
+corpus:
+  raw_sms_path: "data/raw/smsspamcollection/SMSSpamCollection"
+  raw_email_path: "data/raw/archive/Phishing_Email.csv"
+  output_dir: "corpus"
+  spam_count: 30
+  ham_count: 20
+
+test_set:
+  output_dir: "data/test_messages"
+  spam_count: 10
+  ham_count: 5
+
+agents:
+  max_analyze_retries: 1
+
+prompts:
+  dir: "prompts"
+  active_version: "v2"

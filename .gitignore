@@ -1,0 +1,54 @@
+# ── Secrets ────────────────────────────────────────────────────────────────────
+.env
+
+# ── Python ─────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ── Data (raw datasets — trop lourds pour Git) ──────────────────────────────────
+data/raw/
+
+# ── Modèles et embeddings locaux ───────────────────────────────────────────────
+models/
+*.bin
+*.safetensors
+*.gguf
+*.onnx
+
+# ── Docker volumes (persistés sur disque hôte si montés) ───────────────────────
+qdrant_storage/
+n8n_data/
+
+# ── Logs ───────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── OS ─────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── IDE ────────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── Jupyter ────────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ── Cache local des embeddings (13 Mo, régénérable par scripts/ingest.py) ──────
+data/embeddings_cache.json
+
+# ── Documentation et résultats (locaux uniquement) ─────────────────────────────
+docs/
